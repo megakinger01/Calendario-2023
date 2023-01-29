@@ -1,44 +1,60 @@
-import { addHours } from "date-fns"
-
-
-import { Calendar, dateFnsLocalizer } from "react-big-calendar"
-import format from 'date-fns/format'
-import parse from 'date-fns/parse'
-import startOfWeek from 'date-fns/startOfWeek'
-import getDay from 'date-fns/getDay'
-import enUS from 'date-fns/locale/en-US'
-
+import { useState } from "react"
+import { Calendar } from "react-big-calendar"
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 
 
-import { Navbar } from "../"
 
-const locales = {
-  'en-US': enUS,
-}
+import { CalendarEvent, calendarLocalizer, Navbar,CalendarModal } from "../"
+import { messagesInEs } from "../helpers/messagesInEs"
+import { useUiStore } from "../../hooks/useUiStore"
+import { useCalendarStore } from "../../hooks/useCalendarStore"
+import { Fab } from "../components/Fab"
+import { FabDelete } from "../components/FabDelete"
 
 
 
-const localizer = dateFnsLocalizer({
-  format,
-  parse,
-  startOfWeek,
-  getDay,
-  locales,
-})
 
 
 
 export const CalendarPage = () => {
 
+const [lastView, setLastView] = useState( localStorage.getItem('lastView') || 'month' )
+const {  openDateModal } = useUiStore()
 
-  const myEvents = [{
+const { events, activeEventSet } = useCalendarStore()
 
-    title: 'TENGO QUE CONSEGUIR ESTE EMPLEO YA',
-    start: new Date(),
-    end: ( addHours( new Date() , 2 ) )
 
-  }]
+
+
+
+
+  const eventStyleGetter = ({ title, start , end }) => {
+
+    const style= {
+      backgroundColor: 'blue',
+      color:"white",
+    }  
+
+    return {
+      style
+    }
+  }
+
+
+  const onClick = ( event ) => {
+    activeEventSet( event )
+  }
+
+  const onDoubleClick = ( event ) =>{
+      activeEventSet( event )
+      openDateModal()
+  }
+
+  const onViewChange = ( event ) => {
+    localStorage.setItem( 'lastView', event )
+    setLastView( event )
+  }
+
 
 
 
@@ -47,12 +63,29 @@ export const CalendarPage = () => {
       <Navbar />
 
       <Calendar
-        localizer={localizer}
-        events={ myEvents }
+        localizer={calendarLocalizer}
+        eventPropGetter={ eventStyleGetter }
+        culture="es"
+        style={{ height: 600 }}
+
+        events={ events }
+        onSelectEvent={ onClick }
+        onDoubleClickEvent={ onDoubleClick }
+        onView={ onViewChange }
+        defaultView={ lastView }
+
         startAccessor="start"
         endAccessor="end"
-        style={{ height: 600 }}
+        messages={ messagesInEs()}
+        components={{
+          event: CalendarEvent
+        }}
       />
+      <Fab />
+      <FabDelete />
+      
+
+      <CalendarModal />
     </>
   )
 }
